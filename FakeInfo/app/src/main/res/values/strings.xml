@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">FakeInfo</string>
+    <string name="callloginserter">CallLogInserter</string>
+    <string name="smsinserter">SMSInserter</string>
+    <string name="设置默认应用">设置默认应用</string>
+</resources>
