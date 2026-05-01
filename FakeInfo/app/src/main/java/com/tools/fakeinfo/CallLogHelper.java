@@ -27,16 +27,16 @@ public class CallLogHelper {
         this.context = context;
     }
 
-    // ==================== 通话记录相关方法 ====================
+    // ==================== Call Log Related Methods ====================
 
     /**
-     * 插入通话记录
+     * Insert a call log
      *
-     * @param phoneNumber 电话号码
-     * @param callType    通话类型 (CallLog.Calls.INCOMING_TYPE, OUTGOING_TYPE, MISSED_TYPE)
-     * @param callDate    通话时间
-     * @param duration    通话时长（秒）
-     * @return 插入成功返回记录ID，失败返回-1
+     * @param phoneNumber Phone number
+     * @param callType    Call type (CallLog.Calls.INCOMING_TYPE, OUTGOING_TYPE, MISSED_TYPE)
+     * @param callDate    Call date
+     * @param duration    Call duration (seconds)
+     * @return Returns the record ID if inserted successfully, -1 otherwise
      */
     public long insertCallLog(String phoneNumber, int callType, Date callDate, int duration) {
         if (!hasCallLogPermission()) {
@@ -47,7 +47,7 @@ public class CallLogHelper {
 
         Uri insertUri = (callType == TelephonyNumber.TYPE_VOICEMAIL) ? Uri.parse(CallLog.Calls.CONTENT_URI + "?allow_voicemails=true") : CallLog.Calls.CONTENT_URI;
 
-        ContentProviderOperation.Builder builder = ContentProviderOperation.newInsert(insertUri).withValue(CallLog.Calls.NUMBER, phoneNumber).withValue(CallLog.Calls.DATE, callDate.getTime()).withValue(CallLog.Calls.DURATION, duration).withValue(CallLog.Calls.TYPE, callType).withValue(CallLog.Calls.NEW, 1) // 标记为新记录
+        ContentProviderOperation.Builder builder = ContentProviderOperation.newInsert(insertUri).withValue(CallLog.Calls.NUMBER, phoneNumber).withValue(CallLog.Calls.DATE, callDate.getTime()).withValue(CallLog.Calls.DURATION, duration).withValue(CallLog.Calls.TYPE, callType).withValue(CallLog.Calls.NEW, 1) // Mark as new record
                 .withValue(CallLog.Calls.CACHED_NAME, getContactName(phoneNumber));
 
         operations.add(builder.build());
@@ -62,14 +62,14 @@ public class CallLogHelper {
     }
 
     /**
-     * 检查是否有通话记录权限
+     * Check for call log permissions
      */
     public boolean hasCallLogPermission() {
         return ActivityCompat.checkSelfPermission(context, Manifest.permission.WRITE_CALL_LOG) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED;
     }
 
     /**
-     * 查询最后插入的通话记录ID
+     * Query the ID of the last inserted call log
      */
     @SuppressLint("Range")
     private long queryLastCallLogId(String phoneNumber, Date callDate) {
@@ -87,7 +87,7 @@ public class CallLogHelper {
     }
 
     /**
-     * 根据号码获取联系人名称
+     * Get contact name by phone number
      */
     @SuppressLint("Range")
     private String getContactName(String phoneNumber) {
@@ -103,14 +103,14 @@ public class CallLogHelper {
         return null;
     }
 
-    // ==================== 联系人相关方法 ====================
+    // ==================== Contact Related Methods ====================
 
     /**
-     * 插入联系人
+     * Insert a contact
      *
-     * @param name        联系人姓名
-     * @param phoneNumber 电话号码
-     * @return 插入成功返回联系人ID，失败返回-1
+     * @param name        Contact name
+     * @param phoneNumber Phone number
+     * @return Returns contact ID if inserted successfully, -1 otherwise
      */
     public long insertContact(String name, String phoneNumber) {
         if (!hasContactsPermission()) {
@@ -121,13 +121,13 @@ public class CallLogHelper {
         ArrayList<ContentProviderOperation> operations = new ArrayList<>();
         long contactId = -1;
 
-        // 插入原始联系人
+        // Insert raw contact
         operations.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI).withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null).withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
 
-        // 插入联系人姓名
+        // Insert contact name
         operations.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI).withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0).withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE).withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name).build());
 
-        // 插入联系人电话
+        // Insert contact phone
         operations.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI).withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0).withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE).withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phoneNumber).withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE).build());
 
         try {
@@ -140,14 +140,14 @@ public class CallLogHelper {
     }
 
     /**
-     * 检查是否有联系人权限
+     * Check for contact permissions
      */
     public boolean hasContactsPermission() {
         return ActivityCompat.checkSelfPermission(context, Manifest.permission.WRITE_CONTACTS) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED;
     }
 
     /**
-     * 查询联系人ID
+     * Query contact ID
      */
     private long queryContactId(String name, String phoneNumber) {
         ContentResolver resolver = context.getContentResolver();
@@ -159,7 +159,7 @@ public class CallLogHelper {
             if (cursor != null && cursor.moveToFirst()) {
                 @SuppressLint("Range") long contactId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Contacts._ID));
 
-                // 验证电话号码是否匹配
+                // Verify if phone number matches
                 String phoneSelection = ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ? AND " + ContactsContract.CommonDataKinds.Phone.NUMBER + " = ?";
                 String[] phoneSelectionArgs = {String.valueOf(contactId), phoneNumber};
 
@@ -173,13 +173,13 @@ public class CallLogHelper {
         return -1;
     }
 
-    // ==================== 其他辅助方法 ====================
+    // ==================== Other Helper Methods ====================
 
     /**
-     * 检查并请求所需权限
+     * Check and request required permissions
      *
-     * @param permissions 权限数组
-     * @return 所有权限都已授予返回true，否则返回false
+     * @param permissions Array of permissions
+     * @return Returns true if all permissions are granted, false otherwise
      */
     public boolean checkAndRequestPermissions(String[] permissions) {
         boolean allGranted = true;
@@ -201,7 +201,7 @@ public class CallLogHelper {
     }
 
     /**
-     * 获取所有所需权限
+     * Get all required permissions
      */
     public String[] getRequiredPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

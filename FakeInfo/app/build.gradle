@@ -10,7 +10,7 @@ android {
         applicationId "com.test.fakeinfo"
         minSdk 31
         //noinspection OldTargetApi
-        targetSdk 35
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 

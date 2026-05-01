@@ -6,31 +6,34 @@ import java.util.Locale;
 import java.util.Random;
 
 public class SMSInfo {
-    // 短信类型常量
-    public static final int TYPE_INBOX = 1;    // 收件箱
-    public static final int TYPE_SENT = 2;     // 已发送
-    public static final int TYPE_DRAFT = 3;    // 草稿
-    public static final int TYPE_OUTBOX = 4;   // 发件箱
-    public static final int TYPE_FAILED = 5;   // 发送失败
-    public static final int TYPE_QUEUED = 6;   // 待发送
+    // SMS type constants
+    public static final int TYPE_INBOX = 1;    // Inbox
+    public static final int TYPE_SENT = 2;     // Sent
+    public static final int TYPE_DRAFT = 3;    // Draft
+    public static final int TYPE_OUTBOX = 4;   // Outbox
+    public static final int TYPE_FAILED = 5;   // Failed
+    public static final int TYPE_QUEUED = 6;   // Queued
 
-    // 联系人类型常量
-    public static final int CONTACT_FAMILY = 1;    // 家人
-    public static final int CONTACT_FRIEND = 2;    // 朋友
-    public static final int CONTACT_WORK = 3;      // 同事
-    public static final int CONTACT_SERVICE = 4;   // 客服
-    public static final int CONTACT_UNKNOWN = 5;   // 未知
+    // Contact type constants
+    public static final int CONTACT_FAMILY = 1;    // Family
+    public static final int CONTACT_FRIEND = 2;    // Friend
+    public static final int CONTACT_WORK = 3;      // Colleague
+    public static final int CONTACT_SERVICE = 4;   // Customer Service
+    public static final int CONTACT_UNKNOWN = 5;   // Unknown
 
     private static final Random RANDOM = new Random();
     private static final String[] NUMBER_PREFIXES = {"130", "131", "132", "133", "134", "135", "136", "137", "138", "139", "145", "147", "150", "151", "152", "153", "155", "156", "157", "158", "159", "166", "170", "171", "172", "173", "175", "176", "177", "178", "180", "181", "182", "183", "184", "185", "186", "187", "188", "189", "198", "199"};
+    private static final String[] SERVICE_PREFIXES = {
+            "1065", "1068", "1069"
+    };
 
-    private String number;      // 电话号码
-    private String content;     // 短信内容
-    private int type;           // 短信类型
-    private long date;          // 短信时间
-    private int contactType;    // 联系人类型
+    private String number;      // Phone number
+    private String content;     // SMS content
+    private int type;           // SMS type
+    private long date;          // SMS date
+    private int contactType;    // Contact type
 
-    // 完整构造函数
+    // Complete constructor
     public SMSInfo(String number, String content, int type, long date, int contactType) {
         this.number = number;
         this.content = content;
@@ -39,16 +42,21 @@ public class SMSInfo {
         this.contactType = contactType;
     }
 
-    // 随机生成构造函数
+    // Random generation constructor
     public SMSInfo() {
-        this.number = generateRandomNumber();
+
         this.contactType = generateRandomContactType();
+        this.number = generateRandomNumber();
         this.content = SMSContentGenerator.generateMessageByContactType(contactType);
+        if (contactType==SMSInfo.CONTACT_SERVICE)
+        {
+            this.number = generateServiceNumber();
+        }
         this.type = generateRandomType();
         this.date = generateRandomDate();
     }
 
-    // 指定联系人类型的随机生成构造函数
+    // Random generation constructor with specified contact type
     public SMSInfo(int contactType) {
         this.number = generateRandomNumber();
         this.contactType = contactType;
@@ -57,15 +65,21 @@ public class SMSInfo {
         this.date = generateRandomDate();
     }
 
-    // 指定短信分类的随机生成构造函数
+    // Random generation constructor with specified contact type and message category
     public SMSInfo(int contactType, int messageCategory) {
         this.number = generateRandomNumber();
         this.contactType = contactType;
 
-        // 根据联系人类型和消息分类生成内容
+        // Generate content based on contact type and message category
         if (contactType == CONTACT_SERVICE && messageCategory != SMSContentGenerator.CATEGORY_VERIFICATION) {
             this.content = SMSContentGenerator.generateMessageByContactType(contactType);
+                this.number = generateServiceNumber();
+
         } else {
+            if (messageCategory==SMSContentGenerator.CATEGORY_PROMOTION)
+            {
+                this.number = generateServiceNumber();
+            }
             this.content = SMSContentGenerator.generateMessageByCategory(messageCategory);
         }
 
@@ -94,45 +108,45 @@ public class SMSInfo {
         return contactType;
     }
 
-    // 获取短信类型的文字描述
+    // Get text description of SMS type
     public String getTypeDescription() {
         switch (type) {
             case TYPE_INBOX:
-                return "收件箱";
+                return "Inbox";
             case TYPE_SENT:
-                return "已发送";
+                return "Sent";
             case TYPE_DRAFT:
-                return "草稿";
+                return "Draft";
             case TYPE_OUTBOX:
-                return "发件箱";
+                return "Outbox";
             case TYPE_FAILED:
-                return "发送失败";
+                return "Failed";
             case TYPE_QUEUED:
-                return "待发送";
+                return "Queued";
             default:
-                return "未知";
+                return "Unknown";
         }
     }
 
-    // 获取联系人类型的文字描述
+    // Get text description of contact type
     public String getContactTypeDescription() {
         switch (contactType) {
             case CONTACT_FAMILY:
-                return "家人";
+                return "Family";
             case CONTACT_FRIEND:
-                return "朋友";
+                return "Friend";
             case CONTACT_WORK:
-                return "同事";
+                return "Colleague";
             case CONTACT_SERVICE:
-                return "客服";
+                return "Customer Service";
             case CONTACT_UNKNOWN:
-                return "未知";
+                return "Unknown";
             default:
-                return "其他";
+                return "Other";
         }
     }
 
-    // 格式化日期显示
+    // Format date display
     public String getFormattedDate() {
         SimpleDateFormat format;
         if (isToday(date)) {
@@ -145,7 +159,7 @@ public class SMSInfo {
         return format.format(new Date(date));
     }
 
-    // 生成随机电话号码
+    // Generate random phone number
     private String generateRandomNumber() {
         String prefix = NUMBER_PREFIXES[RANDOM.nextInt(NUMBER_PREFIXES.length)];
         StringBuilder sb = new StringBuilder(prefix);
@@ -155,11 +169,24 @@ public class SMSInfo {
         return sb.toString();
     }
 
-    // 生成随机短信类型
+    private String generateServiceNumber() {
+        String prefix = SERVICE_PREFIXES[RANDOM.nextInt(SERVICE_PREFIXES.length)];
+        StringBuilder sb = new StringBuilder(prefix);
+
+        // Calculate remaining digits to pad to 19 characters
+        int remaining = 19 - prefix.length();
+        for (int i = 0; i < remaining; i++) {
+            sb.append(RANDOM.nextInt(10));
+        }
+
+        return sb.toString();
+    }
+
+    // Generate random SMS type
     private int generateRandomType() {
-        // 调整概率分布，让收件箱和已发送更常见
+        // Adjust probability distribution to make inbox and sent more common
         int[] types = {TYPE_INBOX, TYPE_SENT, TYPE_DRAFT, TYPE_OUTBOX, TYPE_FAILED, TYPE_QUEUED};
-        double[] weights = {0.5, 0.3, 0.05, 0.05, 0.05, 0.05}; // 概率权重
+        double[] weights = {0.5, 0.3, 0.05, 0.05, 0.05, 0.05}; // Probability weights
 
         double rand = RANDOM.nextDouble();
         double cumulativeWeight = 0.0;
@@ -171,13 +198,13 @@ public class SMSInfo {
             }
         }
 
-        return types[0]; // 默认返回收件箱
+        return types[0]; // Default to inbox
     }
 
-    // 生成随机联系人类型
+    // Generate random contact type
     private int generateRandomContactType() {
         int[] types = {CONTACT_FAMILY, CONTACT_FRIEND, CONTACT_WORK, CONTACT_SERVICE, CONTACT_UNKNOWN};
-        double[] weights = {0.25, 0.3, 0.2, 0.15, 0.1}; // 概率权重
+        double[] weights = {0.25, 0.3, 0.2, 0.15, 0.1}; // Probability weights
 
         double rand = RANDOM.nextDouble();
         double cumulativeWeight = 0.0;
@@ -189,29 +216,29 @@ public class SMSInfo {
             }
         }
 
-        return types[0]; // 默认返回家人
+        return types[0]; // Default to family
     }
 
-    // 生成随机日期（过去30天内）
+    // Generate random date (within the last 30 days)
     private long generateRandomDate() {
         long now = System.currentTimeMillis();
         long thirtyDaysAgo = now - 30L * 24 * 60 * 60 * 1000;
         return thirtyDaysAgo + (long) (RANDOM.nextDouble() * (now - thirtyDaysAgo));
     }
 
-    // 判断是否为今天
+    // Check if it is today
     private boolean isToday(long time) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         return format.format(new Date(time)).equals(format.format(new Date()));
     }
 
-    // 判断是否为今年
+    // Check if it is this year
     private boolean isThisYear(long time) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy", Locale.getDefault());
         return format.format(new Date(time)).equals(format.format(new Date()));
     }
 
-    // 重写toString方法，便于调试
+    // Override toString method for easy debugging
     @Override
     public String toString() {
         return "SMSInfo{" + "number='" + number + '\'' + ", content='" + content + '\'' + ", type=" + getType() + ", date=" + getFormattedDate() + ", contactType=" + getContactTypeDescription() + '}';
