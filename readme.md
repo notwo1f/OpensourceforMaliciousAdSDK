@@ -14,9 +14,11 @@ Then you also need to grant the file manage permission to allow it to generate t
 
 Then you can update it again,you will see all the information .
 
+After that you can use the command to pull the deviceinfo.json
 
-
-
+```
+adb pull /sdcard/Android/data/com.ashenone.dfp/files/DeviceInfo.json
+```
 
 ## LibChecker
 
